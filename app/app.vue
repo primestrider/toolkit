@@ -24,7 +24,7 @@ useSeoMeta({
 
 <template>
   <UApp>
-    <UHeader>
+    <UHeader class="bg-neutral-100 dark:bg-old-neutral-900">
       <template #left>
         <NuxtLink to="/">
           <AppLogo class="w-auto h-6 shrink-0" />
@@ -34,16 +34,7 @@ useSeoMeta({
       </template>
 
       <template #right>
-        <UColorModeButton />
-
-        <UButton
-          to="https://github.com/nuxt-ui-templates/starter"
-          target="_blank"
-          icon="i-simple-icons-github"
-          aria-label="GitHub"
-          color="neutral"
-          variant="ghost"
-        />
+        <UColorModeButton class="cursor-pointer" />
       </template>
     </UHeader>
 
@@ -51,7 +42,9 @@ useSeoMeta({
       <!-- parent flex center -->
       <div class="w-full flex justify-center">
         <!-- anak ini akan jadi max width 2xl -->
-        <div class="w-full py-8 px-2 md:px-5">
+        <div
+          class="w-full py-8 px-2 md:px-5 bg-neutral-100 dark:bg-old-neutral-900"
+        >
           <NuxtLayout>
             <NuxtPage />
           </NuxtLayout>
@@ -59,9 +52,9 @@ useSeoMeta({
       </div>
     </UMain>
 
-    <USeparator />
+    <USeparator class="border-neutral-500" />
 
-    <UFooter>
+    <UFooter class="bg-neutral-100 dark:bg-old-neutral-900">
       <template #left>
         <p class="text-sm text-muted">
           primestrider © {{ new Date().getFullYear() }}

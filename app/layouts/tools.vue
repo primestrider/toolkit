@@ -1,28 +1,41 @@
-<!-- app/layouts/tools.vue -->
 <template>
   <UMain>
     <div class="w-full">
-      <div class="mx-auto px-4" :style="`max-width: ${containerMaxWidth}`">
+      <!-- inline CSS vars SSR-safe -->
+      <div
+        class="mx-auto px-4 max-w-[1920px]"
+        :style="{
+          '--ad-rail-w': readAdBannerWidth,
+          '--ad-rail-h': railHeight,
+        }"
+      >
+        <!-- grid: single column on mobile, 3 columns on lg -->
         <div
-          class="grid grid-cols-1 lg:grid-cols-[var(--ad-rail-w)_1fr_var(--ad-rail-w)] gap-6 items-start"
+          class="grid grid-cols-1 gap-6 items-start lg:[grid-template-columns:var(--ad-rail-w)_1fr_var(--ad-rail-w)]"
         >
-          <!-- LEFT AD (desktop only) -->
+          <!-- LEFT RAIL (desktop only) -->
           <aside
             class="hidden lg:flex justify-center"
-            aria-label="Iklan kiri"
             role="complementary"
+            aria-labelledby="left-rail-label"
           >
+            <span id="left-rail-label" class="sr-only">Left Advertisement</span>
+
             <div
-              class="ad-rail flex items-center justify-center bg-white border border-gray-200 rounded-md text-xs text-gray-400"
-              :style="`width: var(--ad-rail-w); min-height: var(--ad-rail-h)`"
+              class="flex items-center justify-center bg-white border border-gray-200 rounded-md text-xs text-gray-400 p-2 box-border"
+              :style="{
+                width: 'var(--ad-rail-w)',
+                minHeight: 'var(--ad-rail-h)',
+              }"
+              data-debug="left-ad"
             >
-              Left Ad (<span class="hidden md:inline">var</span>)
+              Left Ad
             </div>
           </aside>
 
           <!-- MAIN COLUMN -->
           <div class="flex flex-col gap-4">
-            <!-- TABLET MEDIUM RECT (300x250) shown on md but hidden on lg -->
+            <!-- Tablet medium rect (visible on md, hidden on lg) -->
             <div
               class="hidden md:flex lg:hidden items-center justify-center mx-auto"
               aria-hidden="true"
@@ -35,41 +48,72 @@
               </div>
             </div>
 
-            <!-- MAIN CONTENT -->
-            <main
-              class="px-0 py-8"
-              style="max-width: 42rem; margin-left: auto; margin-right: auto"
-            >
+            <!-- Main content -->
+            <main class="px-0 py-8 max-w-[42rem] mx-auto">
               <slot />
             </main>
 
-            <!-- BOTTOM BANNER (desktop/tablet/mobile) -->
+            <!-- Bottom banner (responsive) -->
             <div
               class="flex justify-center w-full mt-2 lg:mt-6"
-              aria-label="Iklan bawah"
               role="complementary"
+              aria-label="Iklan bawah"
             >
               <div class="w-full px-4">
+                <!--
+      Container max-width responsif:
+      - mobile: sempit
+      - lg: cukup lebar (1500px) agar 2x728px muat
+      - xl: sedikit lebih lebar
+    -->
                 <div
-                  class="mx-auto bg-white border rounded-md flex items-center justify-center text-xs text-gray-400"
-                  :class="bottomClass"
-                  style="margin: 0 auto"
+                  class="grid grid-cols-1 lg:grid-cols-2 gap-4 mx-auto w-full max-w-[380px] sm:max-w-[500px] md:max-w-[650px] lg:max-w-[1500px] xl:max-w-[1600px]"
                 >
-                  Bottom Ad (responsive)
+                  <!-- Bottom Ad 1: fluid width, but capped to 728px on large screens -->
+                  <div class="w-full flex items-center justify-center">
+                    <div
+                      class="bg-white border rounded-md flex items-center justify-center text-xs text-gray-400 w-full"
+                      :class="bottomSizeClass"
+                      style="max-width: 728px"
+                    >
+                      Bottom Ad #1 (responsive)
+                    </div>
+                  </div>
+
+                  <!-- Bottom Ad 2: hidden on small, shown on lg; also fluid + capped -->
+                  <div
+                    class="w-full hidden lg:flex items-center justify-center"
+                  >
+                    <div
+                      class="bg-white border rounded-md flex items-center justify-center text-xs text-gray-400 w-full"
+                      :class="bottomSizeClass"
+                      style="max-width: 728px"
+                    >
+                      Bottom Ad #2 (responsive)
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- RIGHT AD (desktop only) -->
+          <!-- RIGHT RAIL (desktop only) -->
           <aside
             class="hidden lg:flex justify-center"
-            aria-label="Iklan kanan"
             role="complementary"
+            aria-labelledby="right-rail-label"
           >
+            <span id="right-rail-label" class="sr-only"
+              >Right Advertisement</span
+            >
+
             <div
-              class="ad-rail flex items-center justify-center bg-white border border-gray-200 rounded-md text-xs text-gray-400"
-              :style="`width: var(--ad-rail-w); min-height: var(--ad-rail-h)`"
+              class="flex items-center justify-center bg-white border border-gray-200 rounded-md text-xs text-gray-400 p-2 box-border"
+              :style="{
+                width: 'var(--ad-rail-w)',
+                minHeight: 'var(--ad-rail-h)',
+              }"
+              data-debug="right-ad"
             >
               Right Ad
             </div>
@@ -83,41 +127,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-/*
-  Quick customizable settings:
-  - change railWidth to '160px' (default), '200px', '300px', etc.
-  - containerMaxWidth keeps main content comfortable when rails expand.
-*/
-const railWidth = "240px"; // <-- change this to widen left/right rails (160px / 200px / 300px)
-const railHeight = "600px"; // keep standard vertical rail height
-const containerMaxWidth = "1600px"; // total content width (adjust if rails get huge)
+const readAdBannerWidth = "240px"; // ubah ke 200px / 240px / 300px sesuai kebutuhan
+const railHeight = "600px";
 
-// bottom responsive classes (Tailwind utility string)
-const bottomClass = computed(() => {
-  return "w-[320px] h-[50px] sm:w-[468px] sm:h-[60px] lg:w-[728px] lg:h-[90px]";
+const bottomSizeClass = computed(() => {
+  // jangan set fixed width di sini — gunakan w-full + style max-width di inner div
+  return "h-[50px] sm:h-[60px] lg:h-[90px]";
 });
-
-// inject CSS variables into root of component via style binding
-// Using inline <style> is simpler here; the template uses var(--ad-rail-w) etc.
-const root = document?.documentElement;
-if (typeof window !== "undefined") {
-  document.documentElement.style.setProperty("--ad-rail-w", railWidth);
-  document.documentElement.style.setProperty("--ad-rail-h", railHeight);
-}
 </script>
 
-<style scoped>
-/* Visual polish for ad placeholders */
-.ad-rail {
-  padding: 8px;
-  box-sizing: border-box;
-}
-
-/* ensure rails don't collapse on very narrow screens */
-@media (max-width: 1023px) {
-  :root {
-    --ad-rail-w: 0px;
-    --ad-rail-h: 0px;
-  }
-}
-</style>
+<!-- Tidak ada style custom di sini — semua menggunakan Tailwind -->
