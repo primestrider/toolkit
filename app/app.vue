@@ -51,8 +51,10 @@ useSeoMeta({
       <!-- parent flex center -->
       <div class="w-full flex justify-center">
         <!-- anak ini akan jadi max width 2xl -->
-        <div class="w-full max-w-6xl py-8">
-          <NuxtPage />
+        <div class="w-full py-8 px-2 md:px-5">
+          <NuxtLayout>
+            <NuxtPage />
+          </NuxtLayout>
         </div>
       </div>
     </UMain>
