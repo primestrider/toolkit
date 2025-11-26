@@ -38,19 +38,17 @@ useSeoMeta({
       </template>
     </UHeader>
 
-    <UMain>
-      <!-- parent flex center -->
-      <div class="w-full flex justify-center">
-        <!-- anak ini akan jadi max width 2xl -->
-        <div
-          class="w-full py-8 px-2 md:px-5 bg-neutral-100 dark:bg-old-neutral-900"
-        >
-          <NuxtLayout>
-            <NuxtPage />
-          </NuxtLayout>
-        </div>
+    <!-- parent flex center -->
+    <div class="w-full flex justify-center">
+      <!-- anak ini akan jadi max width 2xl -->
+      <div
+        class="w-full py-8 px-2 md:px-5 bg-neutral-100 dark:bg-old-neutral-900"
+      >
+        <NuxtLayout>
+          <NuxtPage />
+        </NuxtLayout>
       </div>
-    </UMain>
+    </div>
 
     <USeparator class="border-neutral-500" />
 
