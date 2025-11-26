@@ -23,8 +23,8 @@ useSeoMeta({
 </script>
 
 <template>
-  <UApp>
-    <UHeader class="bg-neutral-100 dark:bg-old-neutral-900">
+  <UApp class="bg-background-light dark:bg-background-dark">
+    <UHeader class="bg-background-light dark:bg-background-dark">
       <template #left>
         <NuxtLink to="/">
           <AppLogo class="w-auto h-6 shrink-0" />
@@ -39,20 +39,20 @@ useSeoMeta({
     </UHeader>
 
     <!-- parent flex center -->
-    <div class="w-full flex justify-center">
+    <UMain class="w-full flex justify-center">
       <!-- anak ini akan jadi max width 2xl -->
       <div
-        class="w-full py-8 px-2 md:px-5 bg-neutral-100 dark:bg-old-neutral-900"
+        class="w-full py-8 px-2 md:px-5 bg-background-light dark:bg-background-dark"
       >
         <NuxtLayout>
           <NuxtPage />
         </NuxtLayout>
       </div>
-    </div>
+    </UMain>
 
     <USeparator class="border-neutral-500" />
 
-    <UFooter class="bg-neutral-100 dark:bg-old-neutral-900">
+    <UFooter class="bg-background-light dark:bg-background-dark">
       <template #left>
         <p class="text-sm text-muted">
           primestrider © {{ new Date().getFullYear() }}
