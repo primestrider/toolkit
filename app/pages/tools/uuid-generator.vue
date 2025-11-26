@@ -4,6 +4,7 @@ definePageMeta({
 });
 
 import { ref, computed } from "vue";
+import { useClipboard } from "@vueuse/core";
 import {
   v3 as uuidV3,
   v4 as uuidV4,
@@ -11,6 +12,8 @@ import {
   v6 as uuidV6,
   v7 as uuidV7,
 } from "uuid";
+
+const { copy, copied, isSupported } = useClipboard();
 
 const DNS_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
 
@@ -28,6 +31,9 @@ const namespaceInput = ref<string>(DNS_NAMESPACE);
 const generateUuid = ref<string[]>([]);
 const history = ref<string[][]>([]); // store batches
 const count = ref<number>(1);
+
+// track last copied item for per-item feedback
+const lastCopied = ref<string | null>(null);
 
 const generateOne = (version: string) => {
   switch (version) {
@@ -67,14 +73,32 @@ const generate = () => {
   }
 };
 
-const copyToClipboard = async () => {
+const copyToClipboard = () => {
   if (!generateUuid.value.length) return;
-  await navigator.clipboard.writeText(generateUuid.value.join("\n"));
+  copy(generateUuid.value.join("\n"));
 };
 
 const cleargenerateUuid = () => {
   generateUuid.value = [];
 };
+
+// copy single item (for clicking uuid or clicking copy button)
+const copyItem = async (text: string) => {
+  try {
+    await copy(text);
+    lastCopied.value = text;
+    // clear feedback after 1500ms
+    setTimeout(() => {
+      if (lastCopied.value === text) lastCopied.value = null;
+    }, 1500);
+  } catch {
+    // ignore
+  }
+};
+
+const showNameNamespace = computed(
+  () => selectedUUid.value === "v3" || selectedUUid.value === "v5"
+);
 </script>
 
 <template>
@@ -84,18 +108,173 @@ const cleargenerateUuid = () => {
       description="Generate UUIDs across multiple versions including UUID v3, v4, v5, v6, and v7 instantly and for free. Perfect for developers who need reliable unique identifiers for apps, databases, APIs, and distributed systems."
     />
 
-    <div class="mt-5 flex flex-row gap-3 text-center">
+    <!-- version chips -->
+    <div class="mt-5 flex flex-row gap-3 flex-wrap text-center">
       <UButton
         v-for="version in uuidVersions"
         :key="version.value"
         :label="version.label"
         variant="outline"
         :class="[
-          ' rounded-full px-5 text-center',
-          selectedUUid === version.value ? ' font-bold' : '',
+          'rounded-full px-5 text-center',
+          selectedUUid === version.value
+            ? 'font-bold bg-primary-600 text-white border-primary-700'
+            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
         ]"
         @click="selectedUUid = version.value"
       />
     </div>
+
+    <!-- optional name / namespace inputs for v3 & v5 -->
+    <div
+      v-if="showNameNamespace"
+      class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3"
+    >
+      <div>
+        <label class="block text-sm font-medium mb-1">Name</label>
+        <UInput v-model="nameInput" type="text" class="w-full" size="lg" />
+        <p class="text-xs text-neutral-400 mt-1">
+          Used for name-based UUIDs (v3 & v5).
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Namespace (UUID)</label>
+        <UInput v-model="namespaceInput" type="text" class="w-full" size="lg" />
+        <p class="text-xs text-neutral-400 mt-1">
+          Default DNS namespace:
+          <code class="bg-gray-100 px-1 rounded"
+            >6ba7b810-9dad-11d1-80b4-00c04fd430c8</code
+          >
+        </p>
+      </div>
+    </div>
+
+    <!-- controls: count + actions -->
+    <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-medium mb-1">How many UUIDs?</label>
+
+        <UInputNumber
+          v-model="count"
+          :min="1"
+          :max="1000"
+          size="lg"
+        ></UInputNumber>
+        <p class="text-xs text-neutral-400 mt-1">
+          Max 1000 per generate. Output will be shown line-by-line.
+        </p>
+      </div>
+
+      <div class="flex gap-2">
+        <UButton color="primary" @click="generate">Generate</UButton>
+        <UButton :disabled="!generateUuid.length" @click="copyToClipboard"
+          >Copy</UButton
+        >
+        <UButton @click="cleargenerateUuid">Clear</UButton>
+      </div>
+    </div>
+
+    <!-- RESULT SECTION -->
+    <section class="mt-6">
+      <h2 class="text-lg font-semibold mb-2">
+        Results
+        <span class="text-sm text-neutral-400"
+          >({{ generateUuid.length }} items)</span
+        >
+      </h2>
+
+      <div class="rounded-md border bg-black p-4 min-h-20">
+        <template v-if="!generateUuid.length">
+          <div class="text-neutral-400">
+            No UUIDs generated yet. Click <strong>Generate</strong> to create
+            UUIDs.
+          </div>
+        </template>
+
+        <template v-else>
+          <!-- actions for results -->
+          <div class="flex justify-end gap-2 mb-3">
+            <UButton
+              size="sm"
+              :disabled="!generateUuid.length"
+              @click="copyToClipboard"
+              >Copy All</UButton
+            >
+            <UButton size="sm" variant="outline" @click="cleargenerateUuid"
+              >Clear</UButton
+            >
+          </div>
+
+          <!-- scrollable result list -->
+          <ol
+            class="list-decimal list-inside text-sm max-h-72 overflow-auto wrap-break-word"
+          >
+            <li
+              v-for="(g, idx) in generateUuid"
+              :key="g + String(idx)"
+              class="group flex items-start justify-between gap-1 p-1 relative"
+            >
+              <!-- clicking the text copies the uuid -->
+              <div
+                class="flex-1 pr-3 cursor-pointer select-all"
+                @click="copyItem(g)"
+                title="Click to copy"
+              >
+                {{ g }}
+              </div>
+
+              <!-- copy button appears only on hover (group-hover) -->
+              <div
+                class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <button
+                  class="text-xs px-2 py-1 rounded border bg-white/6"
+                  @click.stop="copyItem(g)"
+                  aria-label="Copy UUID"
+                >
+                  <!-- show 'Copied!' when this item was last copied -->
+                  <span v-if="lastCopied === g">Copied!</span>
+                  <span v-else>Copy</span>
+                </button>
+              </div>
+            </li>
+          </ol>
+        </template>
+      </div>
+    </section>
+
+    <!-- HISTORY (batch) -->
+    <section v-if="history.length" class="mt-6">
+      <h3 class="text-sm font-medium mb-2">History (recent batches)</h3>
+      <div class="space-y-3 max-h-72 overflow-auto">
+        <div
+          v-for="(batch, i) in history"
+          :key="i"
+          class="p-3 rounded border bg-black"
+        >
+          <div class="text-xs text-gray-600 mb-2">
+            Batch #{{ history.length - i }} — {{ batch.length }} item(s)
+          </div>
+          <ol
+            class="list-decimal list-inside text-xs space-y-1 wrap-break-word"
+          >
+            <li v-for="(g, j) in batch" :key="g + String(j)">{{ g }}</li>
+          </ol>
+        </div>
+      </div>
+    </section>
   </UContainer>
 </template>
+
+<style scoped>
+/* show copy button on hover via `group` utility; .select-all helps users copy visually */
+.select-all {
+  user-select: text;
+}
+
+/* small visual tweak for copy button background on dark result area */
+button[aria-label="Copy UUID"] {
+  background: rgba(255, 255, 255, 0.04);
+}
+</style>
