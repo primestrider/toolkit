@@ -13,7 +13,7 @@
         class="grid grid-cols-1 gap-6 items-start lg:grid-cols-[var(--ad-rail-w)_1fr_var(--ad-rail-w)]"
       >
         <!-- LEFT RAIL (desktop only) -->
-        <aside
+        <section
           class="hidden lg:flex justify-center"
           role="complementary"
           aria-labelledby="left-rail-label"
@@ -30,7 +30,7 @@
           >
             Left Ad
           </div>
-        </aside>
+        </section>
 
         <!-- MAIN COLUMN -->
         <div class="flex flex-col gap-4">
@@ -49,13 +49,13 @@
 
           <!-- Main content -->
           <UMain
-            class="mx-auto w-full bg-neutral-50 dark:bg-neutral-950 rounded-lg"
+            class="mx-auto w-full rounded-lg p-2 bg-transparent border border-[rgba(255,255,255,0.08)] shadow-[0_4px_12px_rgba(0,0,0,0.35)]"
           >
             <slot />
           </UMain>
 
           <!-- Bottom banner (responsive) -->
-          <div
+          <section
             class="flex justify-center w-full mt-2 lg:mt-4"
             role="complementary"
             aria-label="Iklan bawah"
@@ -87,11 +87,11 @@
                 </div>
               </div>
             </div>
-          </div>
+          </section>
         </div>
 
         <!-- RIGHT RAIL (desktop only) -->
-        <aside
+        <section
           class="hidden lg:flex justify-center"
           role="complementary"
           aria-labelledby="right-rail-label"
@@ -108,7 +108,7 @@
           >
             Right Ad
           </div>
-        </aside>
+        </section>
       </div>
     </div>
   </UPage>

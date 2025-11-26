@@ -116,10 +116,11 @@ const showNameNamespace = computed(
         :label="version.label"
         variant="outline"
         :class="[
-          'rounded-full px-5 text-center',
+          'rounded-full px-5 py-2 cursor-pointer transition-colors',
           selectedUUid === version.value
-            ? 'font-bold bg-primary-600 text-white border-primary-700'
-            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
+            ? 'font-semibold bg-primary-600 dark:text-200 dark:bg-old-neutral-950 border border-old-neutral-400'
+            : 'border border-old-neutral-300 text-old-neutral-800 bg-white hover:bg-old-neutral-100 \
+         dark:border-old-neutral-700 dark:text-old-neutral-200 dark:bg-old-neutral-900 dark:hover:bg-old-neutral-800',
         ]"
         @click="selectedUUid = version.value"
       />
@@ -184,70 +185,74 @@ const showNameNamespace = computed(
         >
       </h2>
 
-      <div class="rounded-md border bg-black p-4 min-h-20">
-        <template v-if="!generateUuid.length">
-          <div class="text-neutral-400">
-            No UUIDs generated yet. Click <strong>Generate</strong> to create
-            UUIDs.
-          </div>
-        </template>
+      <UCard class="min-h-80">
+        <template #default>
+          <template v-if="!generateUuid.length">
+            <div class="text-neutral-400">
+              No UUIDs generated yet. Click <strong>Generate</strong> to create
+              UUIDs.
+            </div>
+          </template>
 
-        <template v-else>
-          <!-- actions for results -->
-          <div class="flex justify-end gap-2 mb-3">
-            <UButton
-              size="sm"
-              :disabled="!generateUuid.length"
-              @click="copyToClipboard"
-              >Copy All</UButton
-            >
-            <UButton size="sm" variant="outline" @click="cleargenerateUuid"
-              >Clear</UButton
-            >
-          </div>
-
-          <!-- scrollable result list -->
-          <ol
-            class="list-decimal list-inside text-sm max-h-72 overflow-auto wrap-break-word"
-          >
-            <li
-              v-for="(g, idx) in generateUuid"
-              :key="g + String(idx)"
-              class="group flex items-start justify-between gap-1 p-1 relative"
-            >
-              <!-- clicking the text copies the uuid -->
-              <div
-                class="flex-1 pr-3 cursor-pointer select-all"
-                @click="copyItem(g)"
-                title="Click to copy"
+          <template v-else>
+            <!-- actions for results -->
+            <div class="flex justify-end gap-2 mb-3">
+              <UButton
+                size="lg"
+                :disabled="!generateUuid.length"
+                @click="copyToClipboard"
+                color="primary"
+                class="cursor-pointer"
+                >Copy All</UButton
               >
-                {{ g }}
-              </div>
-
-              <!-- copy button appears only on hover (group-hover) -->
-              <div
-                class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+              <UButton size="sm" variant="outline" @click="cleargenerateUuid"
+                >Clear</UButton
               >
-                <button
-                  class="text-xs px-2 py-1 rounded border bg-white/6"
-                  @click.stop="copyItem(g)"
-                  aria-label="Copy UUID"
+            </div>
+
+            <!-- scrollable result list -->
+            <ol
+              class="list-decimal list-inside text-sm max-h-80 overflow-auto wrap-break-word"
+            >
+              <li
+                v-for="(g, idx) in generateUuid"
+                :key="g + String(idx)"
+                class="group flex items-start justify-between gap-1 p-1 relative"
+              >
+                <!-- clicking the text copies the uuid -->
+                <div
+                  class="flex-1 pr-3 cursor-pointer select-all"
+                  @click="copyItem(g)"
+                  title="Click to copy"
                 >
-                  <!-- show 'Copied!' when this item was last copied -->
-                  <span v-if="lastCopied === g">Copied!</span>
-                  <span v-else>Copy</span>
-                </button>
-              </div>
-            </li>
-          </ol>
+                  {{ g }}
+                </div>
+
+                <!-- copy button appears only on hover (group-hover) -->
+                <div
+                  class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <button
+                    class="text-xs px-2 py-1 rounded border bg-white/6"
+                    @click.stop="copyItem(g)"
+                    aria-label="Copy UUID"
+                  >
+                    <!-- show 'Copied!' when this item was last copied -->
+                    <span v-if="lastCopied === g">Copied!</span>
+                    <span v-else>Copy</span>
+                  </button>
+                </div>
+              </li>
+            </ol>
+          </template>
         </template>
-      </div>
+      </UCard>
     </section>
 
     <!-- HISTORY (batch) -->
     <section v-if="history.length" class="mt-6">
       <h3 class="text-sm font-medium mb-2">History (recent batches)</h3>
-      <div class="space-y-3 max-h-72 overflow-auto">
+      <div class="space-y-3 max-h-80 overflow-auto">
         <div
           v-for="(batch, i) in history"
           :key="i"
