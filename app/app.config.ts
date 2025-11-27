@@ -2,7 +2,7 @@ export default defineAppConfig({
   ui: {
     button: {
       slots: {
-        base: ["cursor-pointer rounded-full  px-5!"],
+        base: ["cursor-pointer rounded-full px-5! ring-0!"],
       },
       // 👉 hanya tambahkan bagian ini
       compoundVariants: [
@@ -38,8 +38,8 @@ export default defineAppConfig({
           color: "primary",
           variant: "subtle",
           class:
-            "text-black bg-black/5 hover:bg-black/10 active:bg-black/15 ring ring-inset ring-black/10 " +
-            "dark:text-white dark:bg-white/5 dark:hover:bg-white/10 dark:active:bg-white/15 dark:ring-white/10",
+            "text-black bg-black/5 hover:bg-black/10 active:bg-black/15  " +
+            "dark:text-white dark:bg-white/5 dark:hover:bg-white/10 dark:active:bg-white/15 ",
         },
 
         // primary ghost

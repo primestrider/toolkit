@@ -152,8 +152,10 @@ const showNameNamespace = computed(
     </div>
 
     <!-- controls: count + actions -->
-    <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-      <div class="sm:col-span-2">
+    <!-- controls: count + actions (flex responsive) -->
+    <div class="mt-5 flex flex-col gap-3">
+      <!-- left: input area (takes available width) -->
+      <div class="flex-1">
         <label class="block text-sm font-medium mb-1">How many UUIDs?</label>
 
         <UInputNumber
@@ -162,17 +164,23 @@ const showNameNamespace = computed(
           :max="1000"
           size="lg"
         ></UInputNumber>
+
         <p class="text-xs text-neutral-400 mt-1">
           Max 1000 per generate. Output will be shown line-by-line.
         </p>
       </div>
 
-      <div class="flex gap-2">
-        <UButton color="primary" @click="generate">Generate</UButton>
-        <UButton :disabled="!generateUuid.length" @click="copyToClipboard"
-          >Copy</UButton
+      <!-- right: action buttons -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-2">
+        <UButton
+          color="primary"
+          @click="generate"
+          block
+          size="xl"
+          class="font-semibold"
         >
-        <UButton @click="cleargenerateUuid">Clear</UButton>
+          Generate
+        </UButton>
       </div>
     </div>
 
