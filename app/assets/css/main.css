@@ -14,17 +14,6 @@
      --primary-rgb (set below via :root / .dark). This lets primary
      switch between black and white depending on color mode.
   */
-  --color-primary-50: rgba(var(--primary-rgb), 0.04);
-  --color-primary-100: rgba(var(--primary-rgb), 0.06);
-  --color-primary-200: rgba(var(--primary-rgb), 0.1);
-  --color-primary-300: rgba(var(--primary-rgb), 0.18);
-  --color-primary-400: rgba(var(--primary-rgb), 0.28);
-  --color-primary-500: rgb(var(--primary-rgb));
-  --color-primary-600: rgba(var(--primary-rgb), 0.88);
-  --color-primary-700: rgba(var(--primary-rgb), 0.7);
-  --color-primary-800: rgba(var(--primary-rgb), 0.5);
-  --color-primary-900: rgba(var(--primary-rgb), 0.34);
-  --color-primary-950: rgba(var(--primary-rgb), 0.18);
 
   /* ---------- GREEN (user-provided) ---------- */
   --color-green-50: #effdf5;

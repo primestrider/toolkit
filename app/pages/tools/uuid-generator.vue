@@ -240,13 +240,9 @@ const downloadBatch = (batch: string[], index: number) => {
         :key="version.value"
         :label="version.label"
         variant="outline"
-        :class="[
-          'rounded-full px-5 py-2 cursor-pointer transition-colors',
-          selectedUUid === version.value
-            ? 'font-semibold bg-primary-600 dark:text-200 dark:bg-old-neutral-950 border border-old-neutral-400'
-            : 'border border-old-neutral-300 text-old-neutral-800 bg-white hover:bg-old-neutral-100 \
-         dark:border-old-neutral-700 dark:text-old-neutral-200 dark:bg-old-neutral-900 dark:hover:bg-old-neutral-800',
-        ]"
+        class="rounded-full px-5 py-2 cursor-pointer transition-colors"
+        active-class="font-bold text-primary-500 border border-2"
+        :active="selectedUUid == version.value"
         @click="selectedUUid = version.value"
       />
     </div>
@@ -380,8 +376,13 @@ const downloadBatch = (batch: string[], index: number) => {
     <!-- HISTORY (batch) -->
     <section v-if="history.length" class="mt-6">
       <h3 class="text-sm font-medium mb-2">History (recent batches)</h3>
-      <div class="space-y-3 max-h-80 overflow-auto">
-        <div v-for="(batch, i) in history" :key="i" class="p-0">
+
+      <div class="space-y-3">
+        <div
+          v-for="(batch, i) in history"
+          :key="i"
+          class="p-0 max-h-80 overflow-auto rounded-lg border border-neutral-700/20"
+        >
           <UCard class="p-3">
             <template #default>
               <div class="flex items-start justify-between gap-3">
@@ -410,10 +411,13 @@ const downloadBatch = (batch: string[], index: number) => {
                 </div>
               </div>
 
+              <!-- scrollable batch content -->
               <ol
                 class="list-decimal list-outside text-xs mt-2 space-y-1 wrap-break-word"
               >
-                <li v-for="(g, j) in batch" :key="g + String(j)">{{ g }}</li>
+                <li v-for="(g, j) in batch" :key="g + String(j)">
+                  {{ g }}
+                </li>
               </ol>
             </template>
           </UCard>
