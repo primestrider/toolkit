@@ -27,6 +27,17 @@ jobs:
         with:
           version: 10
 
+      # 🟢 FIX: fallback install pnpm jika belum terdeteksi
+      - name: Fallback install pnpm if missing
+        run: |
+          if ! command -v pnpm &> /dev/null
+          then
+            echo "pnpm not found, installing globally..."
+            npm install -g pnpm@10
+          else
+            echo "pnpm is available"
+          fi
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
