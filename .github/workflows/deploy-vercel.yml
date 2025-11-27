@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch: {}
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repo
@@ -17,7 +19,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          # jangan set cache: pnpm di sini (mengharuskan pnpm tersedia)
+          # DO NOT set cache: pnpm here
 
       - name: Enable Corepack
         run: corepack enable
@@ -37,8 +39,17 @@ jobs:
             echo "pnpm is available"
           fi
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      # Optional: cache pnpm store to speed up installs (uncomment if desired)
+      - name: Cache pnpm store (optional)
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install dependencies (skip optional native deps)
+        run: pnpm install --frozen-lockfile --no-optional
 
       - name: Build Nuxt (SSG)
         run: pnpm run build
@@ -46,9 +57,10 @@ jobs:
       - name: Install Vercel CLI
         run: pnpm add -g vercel@35
 
-      - name: Deploy to Vercel
+      - name: Deploy to Vercel (prebuilt)
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          # optional, but helpful to avoid interactive lookup:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || '' }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || '' }}
         run: vercel --prebuilt --prod --confirm --token "$VERCEL_TOKEN"
