@@ -1,5 +1,15 @@
 export default defineAppConfig({
   ui: {
+    input: {
+      slots: {
+        base: ["rounded-xl focus:ring-0!"],
+      },
+    },
+    inputNumber: {
+      slots: {
+        base: ["rounded-lg focus:ring-0!"],
+      },
+    },
     button: {
       slots: {
         base: ["cursor-pointer rounded-full px-5! ring-0!"],

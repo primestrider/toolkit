@@ -3,8 +3,9 @@ definePageMeta({
   layout: "tools",
 });
 
-import { ref, computed } from "vue";
-import { useClipboard } from "@vueuse/core";
+import { ref, computed, onMounted } from "vue";
+import { useClipboard as useClipboardClient } from "@vueuse/core";
+import { useToast } from "#imports"; // Nuxt UI composable
 import {
   v3 as uuidV3,
   v4 as uuidV4,
@@ -12,8 +13,6 @@ import {
   v6 as uuidV6,
   v7 as uuidV7,
 } from "uuid";
-
-const { copy, copied, isSupported } = useClipboard();
 
 const DNS_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
 
@@ -35,6 +34,53 @@ const count = ref<number>(1);
 // track last copied item for per-item feedback
 const lastCopied = ref<string | null>(null);
 
+// mounted guard and clipboard fn (init only on client)
+const mounted = ref(false);
+let copyFn: ((text: string) => Promise<void>) | null = null;
+const isCopySupported = ref<boolean>(false);
+
+onMounted(() => {
+  mounted.value = true;
+  // init clipboard on client only
+  const cb = useClipboardClient();
+  copyFn = cb.copy;
+  isCopySupported.value = !!cb.isSupported;
+});
+
+/* Nuxt UI toast helper using useToast().add(...) */
+const nuxtToast = useToast();
+
+const showToast = (
+  message: string,
+  opts: { type?: "success" | "error" | "info"; title?: string } = {}
+) => {
+  const color =
+    opts.type === "success"
+      ? "success"
+      : opts.type === "error"
+      ? "danger"
+      : "neutral";
+
+  const payload: Record<string, any> = {};
+  if (opts.title) payload.title = opts.title;
+  payload.description = message;
+  payload.color = color;
+
+  try {
+    if (nuxtToast && typeof nuxtToast.add === "function") {
+      nuxtToast.add(payload);
+      return;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // fallback
+  // eslint-disable-next-line no-console
+  console.info("[toast]", message);
+};
+
+/* UUID generation logic */
 const generateOne = (version: string) => {
   switch (version) {
     case "v3":
@@ -73,32 +119,111 @@ const generate = () => {
   }
 };
 
-const copyToClipboard = () => {
-  if (!generateUuid.value.length) return;
-  copy(generateUuid.value.join("\n"));
+/* Clipboard helpers (guarded) */
+const copyToClipboard = async () => {
+  if (!mounted.value || !copyFn || !generateUuid.value.length) return;
+  try {
+    await copyFn(generateUuid.value.join("\n"));
+    lastCopied.value = generateUuid.value[0] ?? null;
+    setTimeout(() => {
+      lastCopied.value = null;
+    }, 1500);
+
+    showToast(`Copied ${generateUuid.value.length} UUID(s) to clipboard.`, {
+      type: "success",
+    });
+  } catch {
+    showToast("Failed to copy to clipboard.", { type: "error" });
+  }
 };
 
 const cleargenerateUuid = () => {
   generateUuid.value = [];
 };
 
-// copy single item (for clicking uuid or clicking copy button)
+/* copy single item (for clicking uuid or clicking copy button) */
 const copyItem = async (text: string) => {
+  if (!mounted.value || !copyFn) return;
   try {
-    await copy(text);
+    await copyFn(text);
     lastCopied.value = text;
-    // clear feedback after 1500ms
     setTimeout(() => {
       if (lastCopied.value === text) lastCopied.value = null;
     }, 1500);
+    const short = text.length > 12 ? text.slice(0, 12) + "…" : text;
+    showToast(`Copied: ${short}`, { type: "success" });
   } catch {
-    // ignore
+    showToast("Failed to copy.", { type: "error" });
   }
 };
 
 const showNameNamespace = computed(
   () => selectedUUid.value === "v3" || selectedUUid.value === "v5"
 );
+
+/* Download .txt helpers */
+const makeFilename = (prefix = "uuids") => {
+  const now = new Date();
+  const ts = now.toISOString().replace(/[:.]/g, "-");
+  return `${prefix}-${ts}.txt`;
+};
+
+const downloadTxt = (filename?: string) => {
+  if (!mounted.value || !generateUuid.value.length) {
+    showToast("No UUIDs to download.", { type: "info" });
+    return;
+  }
+  const content = generateUuid.value.join("\n");
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || makeFilename("uuids");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  showToast(
+    `Downloaded ${generateUuid.value.length} UUID(s) as ${a.download}`,
+    { type: "success" }
+  );
+};
+
+/* === New: history utilities: copy/download per-batch === */
+const copyBatch = async (batch: string[]) => {
+  if (!mounted.value || !copyFn || !batch.length) return;
+  try {
+    await copyFn(batch.join("\n"));
+    showToast(`Copied ${batch.length} UUID(s) from batch.`, {
+      type: "success",
+    });
+  } catch {
+    showToast("Failed to copy batch.", { type: "error" });
+  }
+};
+
+const downloadBatch = (batch: string[], index: number) => {
+  if (!mounted.value || !batch.length) {
+    showToast("No UUIDs to download in this batch.", { type: "info" });
+    return;
+  }
+  const content = batch.join("\n");
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  // include batch index in filename (1-based)
+  a.download = makeFilename(`uuids-batch-${index + 1}`);
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  showToast(`Downloaded ${batch.length} UUID(s) from batch #${index + 1}`, {
+    type: "success",
+  });
+};
 </script>
 
 <template>
@@ -152,7 +277,6 @@ const showNameNamespace = computed(
     </div>
 
     <!-- controls: count + actions -->
-    <!-- controls: count + actions (flex responsive) -->
     <div class="mt-5 flex flex-col gap-3">
       <!-- left: input area (takes available width) -->
       <div class="flex-1">
@@ -206,6 +330,7 @@ const showNameNamespace = computed(
             <!-- actions for results -->
             <div class="flex justify-end gap-2 mb-3">
               <UButton
+                v-if="isCopySupported && mounted"
                 size="lg"
                 :disabled="!generateUuid.length"
                 @click="copyToClipboard"
@@ -213,6 +338,16 @@ const showNameNamespace = computed(
                 class="cursor-pointer"
                 >Copy All</UButton
               >
+
+              <UButton
+                size="lg"
+                variant="outline"
+                :disabled="!generateUuid.length"
+                @click="() => downloadTxt()"
+              >
+                Download .txt
+              </UButton>
+
               <UButton size="sm" variant="outline" @click="cleargenerateUuid"
                 >Clear</UButton
               >
@@ -220,35 +355,20 @@ const showNameNamespace = computed(
 
             <!-- scrollable result list -->
             <ol
-              class="list-decimal list-inside text-sm max-h-80 overflow-auto wrap-break-word"
+              class="list-decimal list-outside text-sm max-h-80 overflow-auto wrap-break-word"
             >
               <li
                 v-for="(g, idx) in generateUuid"
                 :key="g + String(idx)"
-                class="group flex items-start justify-between gap-1 p-1 relative"
+                class="relative py-1"
               >
-                <!-- clicking the text copies the uuid -->
+                <!-- UUID text — block so it fills the line and is the only selectable content -->
                 <div
-                  class="flex-1 pr-3 cursor-pointer select-all"
+                  class="block pr-12 font-mono whitespace-pre-wrap select-text cursor-pointer"
                   @click="copyItem(g)"
                   title="Click to copy"
                 >
                   {{ g }}
-                </div>
-
-                <!-- copy button appears only on hover (group-hover) -->
-                <div
-                  class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <button
-                    class="text-xs px-2 py-1 rounded border bg-white/6"
-                    @click.stop="copyItem(g)"
-                    aria-label="Copy UUID"
-                  >
-                    <!-- show 'Copied!' when this item was last copied -->
-                    <span v-if="lastCopied === g">Copied!</span>
-                    <span v-else>Copy</span>
-                  </button>
                 </div>
               </li>
             </ol>
@@ -261,19 +381,42 @@ const showNameNamespace = computed(
     <section v-if="history.length" class="mt-6">
       <h3 class="text-sm font-medium mb-2">History (recent batches)</h3>
       <div class="space-y-3 max-h-80 overflow-auto">
-        <div
-          v-for="(batch, i) in history"
-          :key="i"
-          class="p-3 rounded border bg-black"
-        >
-          <div class="text-xs text-gray-600 mb-2">
-            Batch #{{ history.length - i }} — {{ batch.length }} item(s)
-          </div>
-          <ol
-            class="list-decimal list-inside text-xs space-y-1 wrap-break-word"
-          >
-            <li v-for="(g, j) in batch" :key="g + String(j)">{{ g }}</li>
-          </ol>
+        <div v-for="(batch, i) in history" :key="i" class="p-0">
+          <UCard class="p-3">
+            <template #default>
+              <div class="flex items-start justify-between gap-3">
+                <div class="text-xs text-gray-600">
+                  Batch #{{ history.length - i }} — {{ batch.length }} item(s)
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <UButton
+                    size="sm"
+                    variant="outline"
+                    :disabled="!mounted || !batch.length"
+                    @click="() => copyBatch(batch)"
+                  >
+                    Copy Batch
+                  </UButton>
+
+                  <UButton
+                    size="sm"
+                    variant="outline"
+                    :disabled="!mounted || !batch.length"
+                    @click="() => downloadBatch(batch, i)"
+                  >
+                    Download Batch .txt
+                  </UButton>
+                </div>
+              </div>
+
+              <ol
+                class="list-decimal list-outside text-xs mt-2 space-y-1 wrap-break-word"
+              >
+                <li v-for="(g, j) in batch" :key="g + String(j)">{{ g }}</li>
+              </ol>
+            </template>
+          </UCard>
         </div>
       </div>
     </section>
@@ -281,13 +424,8 @@ const showNameNamespace = computed(
 </template>
 
 <style scoped>
-/* show copy button on hover via `group` utility; .select-all helps users copy visually */
+/* keep select helper (if you still use it anywhere) */
 .select-all {
   user-select: text;
-}
-
-/* small visual tweak for copy button background on dark result area */
-button[aria-label="Copy UUID"] {
-  background: rgba(255, 255, 255, 0.04);
 }
 </style>
