@@ -21,7 +21,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8 # atau 10 tergantung pnpm yang kamu gunakan
+          version: 10
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
